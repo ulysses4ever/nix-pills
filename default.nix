@@ -60,7 +60,7 @@ in pkgs.stdenv.mkDerivation {
   name = "nix-pills";
 
   src = sources;
-  buildInputs = with pkgs; [ jing libxslt ];
+  buildInputs = with pkgs; [ jing libxslt fop ];
 
   installPhase = ''
     jing ${pkgs.docbook5}/xml/rng/docbook/docbook.rng $combined
@@ -73,6 +73,15 @@ in pkgs.stdenv.mkDerivation {
       --nonet --output $dst/ \
       ${pkgs.docbook5_xsl}/xml/xsl/docbook/xhtml/chunk.xsl \
       ${combined}
+
+    # Generate the PDF manual.
+    xsltproc \
+      ${manualXsltprocOptions} \
+      --nonet --output $dst/nix-pills.fo \
+      ${pkgs.docbook5_xsl}/xml/xsl/docbook/fo/docbook.xsl \
+      ${combined}
+    fop -fo $dst/nix-pills.fo -pdf $dst/nix-pills.pdf
+    rm $dst/nix-pills.fo
 
     mkdir -p $dst/images
     cp -r ${pkgs.docbook5_xsl}/xml/xsl/docbook/images/callouts $dst/images/callouts
